@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Pembiasaan Bangun Pagi</title>
+    <style>
+        :root { --biru-muda: #e0f2fe; --biru-tua: #0284c7; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--biru-muda); margin: 0; text-align: center; }
+        
+        /* Halaman Cover */
+        #cover { height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
+        .logo { width: 150px; margin: auto; }
+        .btn-mulai { background: var(--biru-tua); color: white; padding: 15px 30px; border-radius: 25px; border: none; font-size: 1.2rem; cursor: pointer; }
+
+        /* Halaman List Nama */
+        #list-nama { display: none; padding: 20px; }
+        .nama-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background: white; border: 2px solid var(--biru-tua); border-radius: 10px; font-size: 1rem; cursor: pointer; }
+
+        /* Kamera */
+        #kamera-area { display: none; padding: 20px; }
+        video { width: 100%; max-width: 400px; border-radius: 15px; background: #000; }
+        #canvas { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="cover">
+        <h1 id="judulApp">PEMBIASAAN BANGUN PAGI</h1>
+        <div class="logo">
+            <img src="https://via.placeholder.com/150" id="logoSekolah" alt="Logo Sekolah">
+        </div>
+        <button class="btn-mulai" onclick="bukaList()">Mulai Presensi</button>
+        <p id="namaSekolah">Nama Sekolah Bapak di Sini</p>
+    </div>
+
+    <div id="list-nama">
+        <h2>Pilih Namamu</h2>
+        <div id="containerNama">
+            </div>
+        <button onclick="lokasiBack('cover')">Kembali</button>
+    </div>
+
+    <div id="kamera-area">
+        <h2>Ambil Foto Selfie</h2>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+        <br><br>
+        <button class="btn-mulai" id="ambilFoto">Ambil Foto & Kirim</button>
+    </div>
+
+    <script>
+        let namaTerpilih = "";
+        const scriptURL = 'TEMPEL_URL_WEB_APP_GOOGLE_SCRIPT_DI_SINI';
+        
+        // Data Siswa (Bisa diubah di sini)
+        const siswa = ["Adit", "Budi", "Cici", "Dina", "Eka"];
+
+        function bukaList() {
+            document.getElementById('cover').style.display = 'none';
+            document.getElementById('list-nama').style.display = 'block';
+            const container = document.getElementById('containerNama');
+            container.innerHTML = "";
+            siswa.forEach(s => {
+                container.innerHTML += `<button class="nama-btn" onclick="pilihSiswa('${s}')">${s}</button>`;
+            });
+        }
+
+        function pilihSiswa(nama) {
+            namaTerpilih = nama;
+            document.getElementById('list-nama').style.display = 'none';
+            document.getElementById('kamera-area').style.display = 'block';
+            startCamera();
+        }
+
+        async function startCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('video').srcObject = stream;
+        }
+
+        document.getElementById('ambilFoto').addEventListener('click', () => {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            const fotoBase64 = canvas.toDataURL('image/jpeg');
+            kirimData(fotoBase64);
+        });
+
+        function kirimData(foto) {
+            document.getElementById('ambilFoto').innerText = "Mengirim...";
+            fetch(scriptURL, {
+                method: 'POST',
+                body: JSON.stringify({ nama: namaTerpilih, foto: foto })
+            })
+            .then(res => {
+                alert("Berhasil! Hebat kamu bangun pagi, " + namaTerpilih);
+                location.reload();
+            })
+            .catch(err => alert("Gagal mengirim data."));
+        }
+    </script>
+</body>
+</html>
